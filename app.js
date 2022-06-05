@@ -20,7 +20,17 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json()); 
   
 // Enabling CORS for all requests 
-app.use(cors()); 
+var corsOptionsDelegate = function (req, callback) {
+  var corsOptions = {
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204
+  };
+  corsOptions.origin = req.get('Origin'); 
+  callback(null, corsOptions) // callback expects two parameters: error and options
+}
+app.use(cors(corsOptionsDelegate)); 
   
 // Adding morgan to log HTTP requests 
 app.use(morgan("combined")); 
