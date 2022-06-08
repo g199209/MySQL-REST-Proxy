@@ -223,7 +223,7 @@ function generateWhereClause(condition_group) {
   return clause;
 } 
 
-// Create
+// Create & Update
 function generateInsertSQL(req) {
   let req_json = req.body;
   if (!("values" in req_json)) {
@@ -251,22 +251,6 @@ function generateInsertSQL(req) {
   return [sql, ""];
 }
 
-app.post("/:table", async (req, res) => { 
-  let [sql, err_msg] = generateInsertSQL(req);
-  if (!sql || sql === "") {
-    return handleGenerateSQLError(err_msg, req, res);
-  }
-
-  try {
-    let result = await connection.awaitQuery(sql);
-    console.log(result);
-    res.status(200).json(initOkJson(result));
-  } catch (err) {
-    handleSQLError(err, res);
-  }
-});
-
-// Update
 function generateUpdateSQL(req) {
   let req_json = req.body;
   if (!("values" in req_json)) {
@@ -303,8 +287,15 @@ function generateUpdateSQL(req) {
   return [sql, ""];
 }
 
-app.put("/:table", async (req, res) => { 
-  let [sql, err_msg] = generateUpdateSQL(req);
+app.post("/:table", async (req, res) => {
+  let sql, err_msg;
+  if (req.query.type === "create") {
+    [sql, err_msg] = generateInsertSQL(req);
+  } else if (req.query.type === "update") {
+    [sql, err_msg] = generateUpdateSQL(req);
+  } else {
+    return handleGenerateSQLError("req type invalid!", req, res);
+  }
   if (!sql || sql === "") {
     return handleGenerateSQLError(err_msg, req, res);
   }
@@ -389,7 +380,47 @@ function generateSelectSQL(req) {
   return [sql, ""];
 }
 
-app.get("/:table", async (req, res) => { 
+// Simple Query
+app.get("/:table", async (req, res) => {
+  let sql = `SELECT * from ${req.params.table}`;
+  let condition = "";
+  for (const [col, val] of Object.entries(req.query)) {
+    if (condition === "") {
+      condition += `${col}="${val}"`
+    } else {
+      condition += ` AND ${col}="${val}"`
+    }
+  }
+  if (condition !== "") {
+    sql += ` WHERE ${condition};`;
+  } else {
+    sql += ';';
+  }
+  console.log(`Generate SQL: ${sql}`);
+
+  try {
+    let result = await connection.awaitQuery(sql);
+    // console.log(result);
+    j = {
+      status: 0,
+      msg: "Success",
+      data: {
+        items: [],
+        total: result.length
+      }
+    };
+    result.forEach(row => {
+      j.data.items.push(row);
+    })
+
+    res.status(200).json(j);
+  } catch (err) {
+    handleSQLError(err, res);
+  }
+});
+
+// Complex Query
+app.put("/:table", async (req, res) => { 
   let [sql, err_msg] = generateSelectSQL(req);
   if (!sql || sql === "") {
     return handleGenerateSQLError(err_msg, req, res);
