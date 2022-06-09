@@ -418,6 +418,7 @@ app.get("/:table", async (req, res) => {
   try {
     let result = await connection.awaitQuery(sql);
     // console.log(result);
+    console.log(`Simple query result length: ${result.length}`)
     j = {
       status: 0,
       msg: "Success",
@@ -446,6 +447,7 @@ app.put("/:table", async (req, res) => {
   try {
     let result = await connection.awaitQuery(sql);
     // console.log(result);
+    console.log(`Complex query result length: ${result.length}`)
     j = {
       status: 0,
       msg: "Success",

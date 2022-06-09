@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 # where available (npm@5+)
 COPY package*.json ./
 
-RUN npm install
+RUN npm install --registry=https://registry.npm.taobao.org --disturl=https://npm.taobao.org/dist
 
 # Bundle app source
 COPY app.js .
