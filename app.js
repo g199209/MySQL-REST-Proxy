@@ -6,10 +6,27 @@ const mysql = require("mysql-await");
 const fs = require("fs");
 
 // Init MySQL connection
-const connection = mysql.createConnection(JSON.parse(fs.readFileSync("mysql-config.json")));
+var connection;
+
+function reconnect() {
+  if (connection) {
+    connection.destroy();
+  }
+  connection = mysql.createConnection(JSON.parse(fs.readFileSync("mysql-config.json")));
+  connection.connect((err) => {
+    if (err) {
+      console.error(`Connect to MySQL Failed, err = ${err.code}! retry in 2s.`);
+      setTimeout(reconnect, 2000);
+    } else {
+      console.log("Connect to MySQL success!");
+    }
+  });
+}
+reconnect();
 
 connection.on("error", (err) => {
   console.error(`MySQL Connection error ${err.code}`);
+  reconnect();
 });
 
 // Defining the Express app 
