@@ -59,7 +59,7 @@ function handleSQLError(err, res) {
     switch(err.code) {
       case "ER_NO_SUCH_TABLE":
         console.error(err.sqlMessage);
-        res.status(404).json({
+        res.status(200).json({
           status: err.errno,
           msg: err.sqlMessage
         });
@@ -67,7 +67,7 @@ function handleSQLError(err, res) {
       
       default:
         console.error(err);
-        res.status(500).json({
+        res.status(200).json({
           status: err.errno,
           msg: err.sqlMessage
         });
@@ -76,7 +76,7 @@ function handleSQLError(err, res) {
 }
 
 function handleGenerateSQLError(err_msg, req, res) {
-    res.status(400).json({
+    res.status(200).json({
         status: 400,
         msg: err_msg,
         req: req.body
