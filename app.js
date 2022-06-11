@@ -243,23 +243,17 @@ function generateWhereClause(condition_group) {
 // Create & Update
 function generateInsertSQL(req) {
   let req_json = req.body;
-  if (!("values" in req_json)) {
-    return ["", "Do not contains 'values' field!"];
-  }  
   let sql = `INSERT INTO ${req.params.table} SET `;
 
   let first_col = true;
-  req_json.values.forEach(col => {
-    if (!("column" in col && "value" in col)) {
-      return ["", "Do not contains 'column' or 'value' field!"];
-    }
+  for (const [col, val] of Object.entries(req_json)) {
     if (!first_col) {
       sql += ',';
     } else {
       first_col = false;
     }
-    sql += `${col.column}="${col.value}"`;
-  });
+    sql += `${col}="${val}"`;
+  }
   if (first_col) {
     return ["", "'values' field is empty"];
   }
@@ -276,17 +270,14 @@ function generateUpdateSQL(req) {
   let sql = `UPDATE ${req.params.table} SET `;
 
   let first_col = true;
-  req_json.values.forEach(col => {
-    if (!("column" in col && "value" in col)) {
-      return ["", "Do not contains 'column' or 'value' field!"];
-    }
+  for (const [col, val] of Object.entries(req_json.values)) {
     if (!first_col) {
       sql += ',';
     } else {
       first_col = false;
     }
-    sql += `${col.column}="${col.value}"`;
-  });
+    sql += `${col}="${val}"`;
+  }
   if (first_col) {
     return ["", "'values' field is empty"];
   }
