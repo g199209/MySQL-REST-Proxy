@@ -60,9 +60,10 @@ function toLiteral(str) {
     return str;
   }
   const dict = { '\b': 'b', '\t': 't', '\n': 'n', '\v': 'v', '\f': 'f', '\r': 'r' };
-  return str.replace(/([\\'"\b\t\n\v\f\r])/g, function($0, $1) {
+  str = str.replace(/([\\'"\b\t\n\v\f\r])/g, function($0, $1) {
       return '\\' + (dict[$1] || $1);
   });
+  return `"${str}"`;
 }
 
 function handleSQLError(err, res) {
@@ -155,36 +156,36 @@ function generateWhereClause(condition_group) {
       switch(condition.op) {
         case "equal":
         case "select_equals":
-          clause += `(${condition.left.field} = "${condition.right}")`;
+          clause += `(${condition.left.field} = ${toLiteral(condition.right)})`;
           break;
 
         case "not_equal":
         case "select_not_equals":
-          clause += `(${condition.left.field} != "${condition.right}")`;
+          clause += `(${condition.left.field} != ${toLiteral(condition.right)})`;
           break;
 
         case "less":
-          clause += `(${condition.left.field} < "${condition.right}")`;
+          clause += `(${condition.left.field} < ${toLiteral(condition.right)})`;
           break;
 
         case "less_or_equal":
-          clause += `(${condition.left.field} <= "${condition.right}")`;
+          clause += `(${condition.left.field} <= ${toLiteral(condition.right)})`;
           break;
 
         case "greater":
-          clause += `(${condition.left.field} > "${condition.right}")`;
+          clause += `(${condition.left.field} > ${toLiteral(condition.right)})`;
           break;
 
         case "greater_or_equal":
-          clause += `(${condition.left.field} >= "${condition.right}")`;
+          clause += `(${condition.left.field} >= ${toLiteral(condition.right)})`;
           break;
 
         case "between":
-          clause += `(${condition.left.field} BETWEEN "${condition.right[0]}" and "${condition.right[1]}")`;
+          clause += `(${condition.left.field} BETWEEN ${toLiteral(condition.right[0])} and ${toLiteral(condition.right[1])})`;
           break;
 
         case "not_between":
-          clause += `(${condition.left.field} NOT BETWEEN "${condition.right[0]}" and "${condition.right[1]}")`;
+          clause += `(${condition.left.field} NOT BETWEEN ${toLiteral(condition.right[0])} and ${toLiteral(condition.right[1])})`;
           break;
 
         case "is_empty":
@@ -196,19 +197,19 @@ function generateWhereClause(condition_group) {
           break;
 
         case "like":
-          clause += `(${condition.left.field} LIKE "${condition.right}")`;
+          clause += `(${condition.left.field} LIKE ${toLiteral(condition.right)})`;
           break;
 
         case "not_like":
-          clause += `(${condition.left.field} NOT LIKE "${condition.right}")`;
+          clause += `(${condition.left.field} NOT LIKE ${toLiteral(condition.right)})`;
           break;
 
         case "starts_with":
-          clause += `(${condition.left.field} LIKE "${condition.right}%")`;
+          clause += `(${condition.left.field} LIKE ${toLiteral(condition.right + "%")})`;
           break;
 
         case "ends_with":
-          clause += `(${condition.left.field} LIKE "%${condition.right}")`;
+          clause += `(${condition.left.field} LIKE ${toLiteral("%" + condition.right)})`;
           break;
         
         case "select_not_any_in":
@@ -226,7 +227,7 @@ function generateWhereClause(condition_group) {
             } else {
               first_any_value = false;
             }
-            clause += `"${v}"`;
+            clause += `${toLiteral(v)}`;
           });
           if (first_any_value) {
             return "";
@@ -262,7 +263,7 @@ function generateInsertSQL(req) {
     } else {
       first_col = false;
     }
-    sql += `${col}="${toLiteral(val)}"`;
+    sql += `${col}=${toLiteral(val)}`;
   }
   if (first_col) {
     return ["", "'values' field is empty"];
@@ -286,7 +287,7 @@ function generateUpdateSQL(req) {
     } else {
       first_col = false;
     }
-    sql += `${col}="${toLiteral(val)}"`;
+    sql += `${col}=${toLiteral(val)}`;
   }
   if (first_col) {
     return ["", "'values' field is empty"];
@@ -407,7 +408,7 @@ app.get("/:table", async (req, res) => {
     if (condition === "") {
       condition += `${col}="${toLiteral(val)}"`
     } else {
-      condition += ` AND ${col}="${toLiteral(val)}"`
+      condition += ` AND ${col}=${toLiteral(val)}`
     }
   }
   if (condition !== "") {
