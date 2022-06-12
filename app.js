@@ -406,7 +406,7 @@ app.get("/:table", async (req, res) => {
   let condition = "";
   for (const [col, val] of Object.entries(req.query)) {
     if (condition === "") {
-      condition += `${col}="${toLiteral(val)}"`
+      condition += `${col}=${toLiteral(val)}`
     } else {
       condition += ` AND ${col}=${toLiteral(val)}`
     }
