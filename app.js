@@ -55,6 +55,13 @@ app.use(morgan("combined"));
 //------------------------------------------------------------------------//
 
 // Common
+function toLiteral(str) {
+  var dict = { '\b': 'b', '\t': 't', '\n': 'n', '\v': 'v', '\f': 'f', '\r': 'r' };
+  return str.replace(/([\\'"\b\t\n\v\f\r])/g, function($0, $1) {
+      return '\\' + (dict[$1] || $1);
+  });
+}
+
 function handleSQLError(err, res) {
     switch(err.code) {
       case "ER_NO_SUCH_TABLE":
@@ -252,7 +259,7 @@ function generateInsertSQL(req) {
     } else {
       first_col = false;
     }
-    sql += `${col}="${val}"`;
+    sql += `${col}="${toLiteral(val)}"`;
   }
   if (first_col) {
     return ["", "'values' field is empty"];
@@ -276,7 +283,7 @@ function generateUpdateSQL(req) {
     } else {
       first_col = false;
     }
-    sql += `${col}="${val}"`;
+    sql += `${col}="${toLiteral(val)}"`;
   }
   if (first_col) {
     return ["", "'values' field is empty"];
@@ -383,7 +390,8 @@ function generateSelectSQL(req) {
       return ["", "Where conditions error"];
     }
     sql += ` WHERE (${where_clause})`;
-  } 
+  }
+
   console.log(`Generate SQL: ${sql}`);
   return [sql, ""];
 }
@@ -394,9 +402,9 @@ app.get("/:table", async (req, res) => {
   let condition = "";
   for (const [col, val] of Object.entries(req.query)) {
     if (condition === "") {
-      condition += `${col}="${val}"`
+      condition += `${col}="${toLiteral(val)}"`
     } else {
-      condition += ` AND ${col}="${val}"`
+      condition += ` AND ${col}="${toLiteral(val)}"`
     }
   }
   if (condition !== "") {
@@ -404,6 +412,7 @@ app.get("/:table", async (req, res) => {
   } else {
     sql += ';';
   }
+
   console.log(`Generate SQL: ${sql}`);
 
   try {
