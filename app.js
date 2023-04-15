@@ -312,6 +312,9 @@ app.post("/:table", async (req, res) => {
     [sql, err_msg] = generateInsertSQL(req);
   } else if (req.query.type === "update") {
     [sql, err_msg] = generateUpdateSQL(req);
+  } else if (req.query.type === "rawSQL") {
+    sql = req.body.SQL;
+    err_msg = sql;
   } else {
     return handleGenerateSQLError("req type invalid!", req, res);
   }
@@ -321,8 +324,27 @@ app.post("/:table", async (req, res) => {
 
   try {
     let result = await connection.awaitQuery(sql);
-    console.log(result);
-    res.status(200).json(initOkJson(result));
+    if (req.query.type === "rawSQL") {
+      // console.log(result);
+      j = {
+        status: 0,
+        msg: "Success",
+        affected: result.affectedRows,
+        changed: result.changedRows,
+        data: {
+          items: [],
+          total: result.length
+        }
+      };
+      result.forEach(row => {
+        j.data.items.push(row);
+      })
+  
+      res.status(200).json(j); 
+    } else {
+      console.log(result);
+      res.status(200).json(initOkJson(result));
+    }
   } catch (err) {
     handleSQLError(err, res);
   }
